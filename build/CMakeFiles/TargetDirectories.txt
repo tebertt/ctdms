@@ -1,0 +1,10 @@
+/Users/troy/Documents/ctdms/build/CMakeFiles/ctdms.dir
+/Users/troy/Documents/ctdms/build/CMakeFiles/test_ctdms.dir
+/Users/troy/Documents/ctdms/build/CMakeFiles/example_read.dir
+/Users/troy/Documents/ctdms/build/CMakeFiles/test.dir
+/Users/troy/Documents/ctdms/build/CMakeFiles/edit_cache.dir
+/Users/troy/Documents/ctdms/build/CMakeFiles/rebuild_cache.dir
+/Users/troy/Documents/ctdms/build/CMakeFiles/list_install_components.dir
+/Users/troy/Documents/ctdms/build/CMakeFiles/install.dir
+/Users/troy/Documents/ctdms/build/CMakeFiles/install/local.dir
+/Users/troy/Documents/ctdms/build/CMakeFiles/install/strip.dir

@@ -1,0 +1,1 @@
+/usr/bin/cc -g -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/example_read.dir/examples/example_read.c.o -o example_read  libctdms.a -lm

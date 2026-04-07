@@ -1,0 +1,2 @@
+/usr/bin/ar qc libctdms.a CMakeFiles/ctdms.dir/src/ctdms.c.o CMakeFiles/ctdms.dir/src/ctdms_parse.c.o CMakeFiles/ctdms.dir/src/ctdms_io.c.o
+/usr/bin/ranlib libctdms.a
