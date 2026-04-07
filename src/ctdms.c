@@ -220,7 +220,7 @@ int64_t ctdms_channel_read_data(const ctdms_channel *ch, void *buffer,
             /* Contiguous data */
             uint64_t byte_offset = chunk->file_offset +
                                     skip * type_sz * ch->dimension;
-            fseek(ch->fp, (long)byte_offset, SEEK_SET);
+            fseeko(ch->fp, (off_t)byte_offset, SEEK_SET);
             size_t bytes = (size_t)(to_read * type_sz * ch->dimension);
             size_t read = fread(out + values_read * type_sz * ch->dimension,
                                 1, bytes, ch->fp);
@@ -231,7 +231,7 @@ int64_t ctdms_channel_read_data(const ctdms_channel *ch, void *buffer,
             for (uint64_t vi = 0; vi < to_read; vi++) {
                 uint64_t byte_offset = chunk->file_offset +
                                         (skip + vi) * stride;
-                fseek(ch->fp, (long)byte_offset, SEEK_SET);
+                fseeko(ch->fp, (off_t)byte_offset, SEEK_SET);
                 size_t bytes = type_sz * ch->dimension;
                 fread(out + (values_read + vi) * bytes, 1, bytes, ch->fp);
             }
@@ -271,7 +271,7 @@ int64_t ctdms_channel_read_strings(const ctdms_channel *ch,
         uint32_t *offsets = malloc((size_t)chunk->num_values * sizeof(uint32_t));
         if (!offsets) return CTDMS_ERR_ALLOC;
 
-        fseek(ch->fp, (long)chunk->file_offset, SEEK_SET);
+        fseeko(ch->fp, (off_t)chunk->file_offset, SEEK_SET);
         fread(offsets, sizeof(uint32_t), (size_t)chunk->num_values, ch->fp);
 
         /* String data starts after offset array */
@@ -289,7 +289,7 @@ int64_t ctdms_channel_read_strings(const ctdms_channel *ch,
                 free(offsets);
                 return CTDMS_ERR_ALLOC;
             }
-            fseek(ch->fp, (long)(string_data_start + str_start), SEEK_SET);
+            fseeko(ch->fp, (off_t)(string_data_start + str_start), SEEK_SET);
             fread(s, 1, str_len, ch->fp);
             s[str_len] = '\0';
             buffer[values_read + vi] = s;

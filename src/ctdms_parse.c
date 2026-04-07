@@ -293,7 +293,7 @@ static ctdms_error parse_segment(ctdms_file *file, uint64_t seg_start,
     FILE *fp = file->fp;
 
     /* Read lead-in */
-    if (fseek(fp, (long)seg_start, SEEK_SET) != 0)
+    if (fseeko(fp, (off_t)seg_start, SEEK_SET) != 0)
         return CTDMS_ERR_READ;
 
     /* Tag: "TDSm" */
@@ -326,10 +326,10 @@ static ctdms_error parse_segment(ctdms_file *file, uint64_t seg_start,
     /* Calculate next segment position */
     if (next_seg_offset == 0xFFFFFFFFFFFFFFFFULL) {
         /* Last segment, possibly incomplete - get file size */
-        long cur = ftell(fp);
-        fseek(fp, 0, SEEK_END);
-        *next_seg_pos = (uint64_t)ftell(fp);
-        fseek(fp, cur, SEEK_SET);
+        off_t cur = ftello(fp);
+        fseeko(fp, 0, SEEK_END);
+        *next_seg_pos = (uint64_t)ftello(fp);
+        fseeko(fp, cur, SEEK_SET);
     } else {
         *next_seg_pos = seg_start + CTDMS_LEAD_IN_SIZE + next_seg_offset;
     }
@@ -341,7 +341,7 @@ static ctdms_error parse_segment(ctdms_file *file, uint64_t seg_start,
 
     /* ---- Parse meta data ---- */
     if (toc & CTDMS_TOC_METADATA) {
-        if (fseek(fp, (long)meta_start, SEEK_SET) != 0)
+        if (fseeko(fp, (off_t)meta_start, SEEK_SET) != 0)
             return CTDMS_ERR_READ;
 
         uint32_t num_objects = ctdms_read_u32(fp, big_endian);
@@ -518,10 +518,10 @@ static ctdms_error parse_segment(ctdms_file *file, uint64_t seg_start,
         uint64_t total_raw_size;
 
         if (next_seg_offset == 0xFFFFFFFFFFFFFFFFULL) {
-            long cur = ftell(fp);
-            fseek(fp, 0, SEEK_END);
-            uint64_t file_size = (uint64_t)ftell(fp);
-            fseek(fp, cur, SEEK_SET);
+            off_t cur = ftello(fp);
+            fseeko(fp, 0, SEEK_END);
+            uint64_t file_size = (uint64_t)ftello(fp);
+            fseeko(fp, cur, SEEK_SET);
             total_raw_size = file_size - raw_start;
         } else {
             total_raw_size = (seg_start + CTDMS_LEAD_IN_SIZE + next_seg_offset)
@@ -561,7 +561,7 @@ static ctdms_error parse_segment(ctdms_file *file, uint64_t seg_start,
 
         /* Re-read meta to get num_values per channel in this segment */
         if (toc & CTDMS_TOC_METADATA) {
-            fseek(fp, (long)meta_start, SEEK_SET);
+            fseeko(fp, (off_t)meta_start, SEEK_SET);
             uint32_t num_objects = ctdms_read_u32(fp, big_endian);
 
             for (uint32_t obj_i = 0; obj_i < num_objects; obj_i++) {
@@ -725,11 +725,11 @@ ctdms_error ctdms_parse_file(ctdms_file *file) {
     FILE *fp = file->fp;
 
     /* Get file size */
-    fseek(fp, 0, SEEK_END);
-    long file_size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
+    fseeko(fp, 0, SEEK_END);
+    off_t file_size = ftello(fp);
+    fseeko(fp, 0, SEEK_SET);
 
-    if (file_size < CTDMS_LEAD_IN_SIZE) {
+    if (file_size < (off_t)CTDMS_LEAD_IN_SIZE) {
         snprintf(file->error_msg, sizeof(file->error_msg),
                  "File too small to contain a TDMS segment");
         return CTDMS_ERR_INVALID_FILE;
@@ -744,11 +744,11 @@ ctdms_error ctdms_parse_file(ctdms_file *file) {
                  "Not a TDMS file (missing TDSm tag)");
         return CTDMS_ERR_INVALID_FILE;
     }
-    fseek(fp, 0, SEEK_SET);
+    fseeko(fp, 0, SEEK_SET);
 
     /* Parse all segments */
     uint64_t pos = 0;
-    while (pos < (uint64_t)file_size) {
+    while (pos < (uint64_t)(off_t)file_size) {
         uint64_t next_pos = 0;
         ctdms_error err = parse_segment(file, pos, &next_pos);
         if (err != CTDMS_OK)

@@ -6,6 +6,11 @@
 #ifndef CTDMS_INTERNAL_H
 #define CTDMS_INTERNAL_H
 
+/* Enable 64-bit off_t on 32-bit Linux (must come before any system headers) */
+#ifndef _FILE_OFFSET_BITS
+#  define _FILE_OFFSET_BITS 64
+#endif
+
 #include "ctdms/ctdms.h"
 #include <stdio.h>
 

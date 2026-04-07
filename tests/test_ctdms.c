@@ -110,11 +110,11 @@ static void write_string(FILE *fp, const char *s) {
 
 /* Write lead-in with placeholder offsets; returns the file position of the
  * next_segment_offset field so it can be patched later. */
-static long write_lead_in(FILE *fp, uint32_t toc) {
+static off_t write_lead_in(FILE *fp, uint32_t toc) {
     fwrite("TDSm", 1, 4, fp);
     write_u32_le(fp, toc);
     write_u32_le(fp, 4713);
-    long offset_pos = ftell(fp);
+    off_t offset_pos = ftello(fp);
     write_u64_le(fp, 0); /* next_segment_offset placeholder */
     write_u64_le(fp, 0); /* raw_data_offset placeholder */
     return offset_pos;
@@ -125,16 +125,16 @@ static long write_lead_in(FILE *fp, uint32_t toc) {
  * meta_end:  file position after all metadata
  * seg_end:   file position after all raw data
  */
-static void patch_lead_in(FILE *fp, long seg_start, long meta_end,
-                           long seg_end) {
-    long lead_in_end = seg_start + 28; /* lead-in is always 28 bytes */
+static void patch_lead_in(FILE *fp, off_t seg_start, off_t meta_end,
+                           off_t seg_end) {
+    off_t lead_in_end = seg_start + 28; /* lead-in is always 28 bytes */
     uint64_t next_seg_offset = (uint64_t)(seg_end - lead_in_end);
     uint64_t raw_data_offset = (uint64_t)(meta_end - lead_in_end);
-    long cur = ftell(fp);
-    fseek(fp, seg_start + 12, SEEK_SET); /* skip tag(4)+toc(4)+version(4) */
+    off_t cur = ftello(fp);
+    fseeko(fp, seg_start + 12, SEEK_SET); /* skip tag(4)+toc(4)+version(4) */
     write_u64_le(fp, next_seg_offset);
     write_u64_le(fp, raw_data_offset);
-    fseek(fp, cur, SEEK_SET);
+    fseeko(fp, cur, SEEK_SET);
 }
 
 static void test_read_minimal_tdms(void) {
@@ -175,7 +175,7 @@ static void test_read_minimal_tdms(void) {
      * = 4+19 + 4 + 4+4+8 + 4 = 47
      */
 
-    long seg_start = ftell(fp);
+    off_t seg_start = ftello(fp);
     write_lead_in(fp, 0x0E);
 
     /* Meta data */
@@ -197,14 +197,14 @@ static void test_read_minimal_tdms(void) {
     write_u64_le(fp, 3);    /* num values */
     write_u32_le(fp, 0);    /* 0 properties */
 
-    long meta_end = ftell(fp);
+    off_t meta_end = ftello(fp);
 
     /* Raw data: 1, 2, 3 as I32 LE */
     write_u32_le(fp, 1);
     write_u32_le(fp, 2);
     write_u32_le(fp, 3);
 
-    long seg_end = ftell(fp);
+    off_t seg_end = ftello(fp);
     patch_lead_in(fp, seg_start, meta_end, seg_end);
 
     fclose(fp);
@@ -270,7 +270,7 @@ static void test_multi_segment(void) {
     ASSERT_NE(fp, NULL);
 
     /* Segment 1: channel with 2 I32 values: 10, 20 */
-    long s1_start = ftell(fp);
+    off_t s1_start = ftello(fp);
     write_lead_in(fp, 0x0E);
 
     write_u32_le(fp, 1); /* 1 object */
@@ -281,14 +281,14 @@ static void test_multi_segment(void) {
     write_u64_le(fp, 2);
     write_u32_le(fp, 0);
 
-    long s1_meta_end = ftell(fp);
+    off_t s1_meta_end = ftello(fp);
     write_u32_le(fp, 10);
     write_u32_le(fp, 20);
-    long s1_end = ftell(fp);
+    off_t s1_end = ftello(fp);
     patch_lead_in(fp, s1_start, s1_meta_end, s1_end);
 
     /* Segment 2: same channel, 2 more values: 30, 40 */
-    long s2_start = ftell(fp);
+    off_t s2_start = ftello(fp);
     write_lead_in(fp, 0x0E);
 
     write_u32_le(fp, 1);
@@ -299,10 +299,10 @@ static void test_multi_segment(void) {
     write_u64_le(fp, 2);
     write_u32_le(fp, 0);
 
-    long s2_meta_end = ftell(fp);
+    off_t s2_meta_end = ftello(fp);
     write_u32_le(fp, 30);
     write_u32_le(fp, 40);
-    long s2_end = ftell(fp);
+    off_t s2_end = ftello(fp);
     patch_lead_in(fp, s2_start, s2_meta_end, s2_end);
 
     fclose(fp);
@@ -344,7 +344,7 @@ static void test_two_channels(void) {
     ASSERT_NE(fp, NULL);
 
     /* One segment with two channels, 3 I32 values each */
-    long seg_start = ftell(fp);
+    off_t seg_start = ftello(fp);
     write_lead_in(fp, 0x0E);
 
     write_u32_le(fp, 2);
@@ -363,7 +363,7 @@ static void test_two_channels(void) {
     write_u64_le(fp, 3);
     write_u32_le(fp, 0);
 
-    long meta_end = ftell(fp);
+    off_t meta_end = ftello(fp);
 
     /* Raw: C1 then C2 (contiguous/non-interleaved) */
     write_u32_le(fp, 1);
@@ -373,7 +373,7 @@ static void test_two_channels(void) {
     write_u32_le(fp, 5);
     write_u32_le(fp, 6);
 
-    long seg_end = ftell(fp);
+    off_t seg_end = ftello(fp);
     patch_lead_in(fp, seg_start, meta_end, seg_end);
 
     fclose(fp);
